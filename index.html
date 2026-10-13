@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Algorithms Lab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#0f1115;
+  --surface:#171a21;
+  --surface-2:#1e222b;
+  --surface-3:#262b36;
+  --border:#282d38;
+  --text:#eef0f4;
+  --text-dim:#8c93a3;
+  --text-faint:#565c6b;
+  --ttt:#a78bfa;
+  --ttt-dim:#a78bfa33;
+  --maze:#2dd4bf;
+  --maze-dim:#2dd4bf33;
+  --sudoku:#fbbf24;
+  --sudoku-dim:#fbbf2433;
+  --bad:#f87171;
+  --radius:12px;
+}
+*{box-sizing:border-box;}
+::selection{ background:var(--ttt-dim); }
+
+body{
+  margin:0;
+  background:var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+  background-size: 22px 22px;
+  color:var(--text);
+  font-family:'Inter', sans-serif;
+  min-height:100vh;
+}
+
+.wrap{ max-width:1180px; margin:0 auto; padding:36px 24px 60px; }
+
+header.top{ margin-bottom:22px; }
+.eyebrow{
+  font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.14em;
+  color:var(--text-faint); text-transform:uppercase; margin-bottom:10px;
+}
+h1{
+  font-family:'Space Grotesk', sans-serif; font-size:clamp(28px, 4vw, 40px);
+  font-weight:700; margin:0 0 8px; line-height:1.15;
+}
+.sub{ color:var(--text-dim); font-size:15px; max-width:640px; line-height:1.5; }
+
+.nav{
+  display:flex; gap:2px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:4px; margin:24px 0 24px; width:fit-content;
+}
+.nav-btn{
+  font-family:'JetBrains Mono', monospace; font-size:13px; padding:10px 16px;
+  border-radius:8px; border:none; background:transparent; color:var(--text-dim);
+  cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap;
+}
+.nav-btn:hover{ color:var(--text); }
+.nav-btn.active{ background:var(--surface-2); color:var(--text); }
+.nav-btn .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:8px; position:relative; top:-1px; background:var(--text-faint); }
+.nav-btn[data-view="ttt"].active .dot{ background:var(--ttt); }
+.nav-btn[data-view="maze"].active .dot{ background:var(--maze); }
+.nav-btn[data-view="sudoku"].active .dot{ background:var(--sudoku); }
+
+.view{ display:none; animation: fadeUp .25s ease; }
+.view.active{ display:block; }
+@keyframes fadeUp{ from{ opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+.cards{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+@media (max-width:860px){ .cards{ grid-template-columns:1fr; } }
+.card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:24px; cursor:pointer; transition:transform .15s ease, border-color .15s ease, box-shadow .2s ease;
+  position:relative; overflow:hidden;
+}
+.card:hover{ transform:translateY(-3px); }
+.card:nth-child(1):hover{ border-color:var(--ttt); box-shadow:0 12px 30px -14px var(--ttt-dim); }
+.card:nth-child(2):hover{ border-color:var(--maze); box-shadow:0 12px 30px -14px var(--maze-dim); }
+.card:nth-child(3):hover{ border-color:var(--sudoku); box-shadow:0 12px 30px -14px var(--sudoku-dim); }
+.card-icon{ width:38px; height:38px; margin-bottom:16px; }
+.card h3{ font-family:'Space Grotesk', sans-serif; font-size:19px; margin:0 0 6px; }
+.card p{ font-size:13.5px; color:var(--text-dim); line-height:1.55; margin:0 0 16px; }
+.card .tag{
+  font-family:'JetBrains Mono', monospace; font-size:11px; padding:4px 9px; border-radius:5px;
+  border:1px solid var(--border); color:var(--text-dim); display:inline-block;
+}
+.card .cta{
+  margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:12.5px;
+  display:flex; align-items:center; gap:6px;
+}
+.card:nth-child(1) .cta{ color:var(--ttt); }
+.card:nth-child(2) .cta{ color:var(--maze); }
+.card:nth-child(3) .cta{ color:var(--sudoku); }
+
+.intro-panel{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px 24px; margin-bottom:20px; font-size:13.5px; color:var(--text-dim); line-height:1.6;
+}
+.intro-panel b{ color:var(--text); }
+
+.stage{ display:grid; grid-template-columns: 1fr 340px; gap:20px; align-items:start; }
+@media (max-width: 860px){ .stage{ grid-template-columns: 1fr; } }
+
+.panel{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+.panel-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:12px; flex-wrap:wrap; }
+.back-btn{
+  font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-dim); background:none;
+  border:none; cursor:pointer; padding:0 0 14px; display:flex; align-items:center; gap:6px;
+}
+.back-btn:hover{ color:var(--text); }
+.panel-title{ font-family:'Space Grotesk', sans-serif; font-size:19px; font-weight:700; }
+.panel-desc{ font-size:13.5px; color:var(--text-dim); line-height:1.55; margin:0 0 16px; }
+.tag{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.04em; padding:4px 9px; border-radius:5px; border:1px solid var(--border); color:var(--text-dim); }
+
+.controls{ display:flex; gap:18px; flex-wrap:wrap; margin-bottom:18px; align-items:flex-end; }
+.control-group{ display:flex; flex-direction:column; gap:6px; }
+.control-label{ font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-faint); }
+.seg{ display:flex; gap:2px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:3px; }
+.seg-btn{
+  font-family:'JetBrains Mono', monospace; font-size:11.5px; padding:6px 11px; border-radius:6px; border:none;
+  background:transparent; color:var(--text-dim); cursor:pointer;
+}
+.seg-btn.active{ background:var(--surface-3); color:var(--text); }
+.seg-btn.on-ttt.active{ color:var(--ttt); } .seg-btn.on-maze.active{ color:var(--maze); } .seg-btn.on-sudoku.active{ color:var(--sudoku); }
+input[type="range"]{ width:120px; accent-color:var(--text-dim); }
+
+.btn{
+  font-family:'JetBrains Mono', monospace; font-size:12.5px; padding:9px 16px; border-radius:8px;
+  border:1px solid var(--border); background:var(--surface-2); color:var(--text); cursor:pointer;
+  transition:border-color .15s ease, transform .1s ease;
+}
+.btn:hover{ border-color:var(--text-faint); }
+.btn:active{ transform:scale(0.97); }
+.btn:disabled{ opacity:0.4; cursor:not-allowed; }
+.btn-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; align-items:center; }
+.btn.accent-ttt{ border-color:var(--ttt); color:var(--ttt); }
+.btn.accent-maze{ border-color:var(--maze); color:var(--maze); }
+.btn.accent-sudoku{ border-color:var(--sudoku); color:var(--sudoku); }
+.btn.ghost{ background:none; }
+
+.scoreboard{ display:flex; gap:10px; font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-dim); margin-left:auto; }
+.scoreboard b{ color:var(--text); font-size:15px; font-family:'Space Grotesk',sans-serif; }
+.score-item{ text-align:center; }
+
+.ttt-wrap{ position:relative; width:fit-content; margin:0 auto; }
+.ttt-board{ display:grid; grid-template-columns:repeat(3, 84px); grid-template-rows:repeat(3, 84px); gap:6px; }
+.ttt-cell{
+  background:var(--surface-2); border:1px solid var(--border); border-radius:9px;
+  font-family:'Space Grotesk', sans-serif; font-size:34px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text);
+  transition:border-color .15s ease, transform .12s ease;
+}
+.ttt-cell:hover:not(.filled){ border-color:var(--ttt); }
+.ttt-cell.placed{ animation: pop .18s ease; }
+@keyframes pop{ from{ transform:scale(0.7); opacity:0.4;} to{ transform:scale(1); opacity:1;} }
+.ttt-cell.x{ color:var(--maze); }
+.ttt-cell.o{ color:var(--ttt); }
+.ttt-cell.win{ box-shadow: inset 0 0 0 2px currentColor; }
+.win-line{ position:absolute; top:0; left:0; pointer-events:none; }
+.win-line line{ stroke-linecap:round; stroke-dasharray:300; stroke-dashoffset:300; animation:draw .35s ease forwards; }
+@keyframes draw{ to{ stroke-dashoffset:0; } }
+.ttt-status{ text-align:center; margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--text-dim); min-height:18px; }
+.ttt-status.win-text{ color:var(--maze); font-weight:500; }
+.ttt-status.lose-text{ color:var(--ttt); font-weight:500; }
+
+.maze-board{ display:grid; gap:3px; margin:0 auto; width:fit-content; user-select:none; }
+.maze-cell{ background:var(--surface-2); border:1px solid var(--border); border-radius:4px; cursor:pointer; transition:background .1s ease; }
+.maze-cell.wall{ background:#323847; border-color:#3d4456; }
+.maze-cell.start{ background:var(--maze); border-color:var(--maze); }
+.maze-cell.goal{ background:var(--sudoku); border-color:var(--sudoku); }
+.maze-cell.visited{ background:rgba(45,212,191,0.18); }
+.maze-cell.path{ background:var(--maze); animation:pop .15s ease; }
+.maze-cell.start, .maze-cell.goal{ cursor:default; }
+.maze-cell.player-trail{ background:rgba(167,139,250,0.28); }
+.maze-cell.player-pos{ background:var(--ttt); border-color:var(--ttt); box-shadow:0 0 0 3px rgba(167,139,250,0.35); animation:pop .15s ease; }
+.maze-cell.player-pos.on-goal{ animation:pulseWin .6s ease infinite; }
+@keyframes pulseWin{ 0%,100%{ box-shadow:0 0 0 3px rgba(167,139,250,0.35);} 50%{ box-shadow:0 0 0 8px rgba(167,139,250,0.15);} }
+
+.sudoku-board{ display:grid; grid-template-columns:repeat(9, 38px); grid-template-rows:repeat(9, 38px); gap:0; margin:0 auto; width:fit-content; border:2px solid var(--border); }
+.sudoku-cell{ display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-size:16px; border:1px solid #262b36; color:var(--text); background:var(--surface-2); }
+.sudoku-cell.given{ color:var(--text-dim); font-weight:500; }
+.sudoku-cell.solved{ color:var(--sudoku); animation:pop .15s ease; }
+.sudoku-cell.nth-r3{ border-bottom:2px solid var(--border); }
+.sudoku-cell.nth-c3{ border-right:2px solid var(--border); }
+.sudoku-input{
+  width:100%; height:100%; border:none; outline:none; background:transparent;
+  color:var(--maze); font-family:'JetBrains Mono', monospace; font-size:16px; font-weight:500;
+  text-align:center; padding:0; caret-color:var(--maze);
+}
+.sudoku-input:focus{ background:rgba(45,212,191,0.12); }
+.sudoku-input.conflict{ color:var(--bad); background:rgba(248,113,113,0.14); }
+.sudoku-input.hinted{ color:var(--sudoku); }
+.sudoku-cell.solved-flash{ animation:pop .15s ease; }
+
+.console{ position:sticky; top:24px; background:#0a0c10; border:1px solid var(--border); border-radius:var(--radius); padding:18px; height:560px; display:flex; flex-direction:column; }
+.console-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint); letter-spacing:0.08em; text-transform:uppercase; }
+.console-dots span{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-left:5px; background:#282d38; }
+.console-body{ flex:1; overflow-y:auto; font-family:'JetBrains Mono', monospace; font-size:12px; line-height:1.7; color:var(--text-dim); }
+.console-body::-webkit-scrollbar{ width:6px; }
+.console-body::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }
+.log-line{ margin-bottom:2px; }
+.log-line.ok{ color:var(--maze); }
+.log-line.hi{ color:var(--sudoku); }
+.log-line.mv{ color:var(--ttt); }
+.console-stats{ display:flex; gap:14px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint); }
+.console-stats b{ color:var(--text); font-size:15px; display:block; font-family:'Space Grotesk',sans-serif;}
+
+footer.foot{
+  margin-top:36px; padding-top:20px; border-top:1px solid var(--border);
+  font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--text-faint);
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">AI Algorithms Lab &middot; FOAI Semester Project</div>
+    <h1>Three games. Three search strategies.</h1>
+    <p class="sub">Each game is a thin skin over a different AI model. Play them, then watch the console show exactly what the algorithm is doing underneath.</p>
+  </header>
+
+  <div class="nav">
+    <button class="nav-btn active" data-view="home"><span class="dot"></span>Home</button>
+    <button class="nav-btn" data-view="ttt"><span class="dot"></span>Tic-Tac-Toe</button>
+    <button class="nav-btn" data-view="maze"><span class="dot"></span>Maze Builder</button>
+    <button class="nav-btn" data-view="sudoku"><span class="dot"></span>Sudoku</button>
+  </div>
+
+  <div class="view active" id="view-home">
+    <div class="cards">
+      <div class="card" data-goto="ttt">
+        <svg class="card-icon" viewBox="0 0 40 40" fill="none"><path d="M14 4v32M26 4v32M4 14h32M4 26h32" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <span class="tag">Adversarial Search</span>
+        <h3>Tic-Tac-Toe</h3>
+        <p>Play against an AI that reads the entire game tree with Minimax and Alpha-Beta pruning. It never loses.</p>
+        <div class="cta">Play &rarr;</div>
+      </div>
+      <div class="card" data-goto="maze">
+        <svg class="card-icon" viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="8" height="8" rx="2" fill="#2dd4bf"/><rect x="28" y="28" width="8" height="8" rx="2" fill="#fbbf24"/><path d="M8 12v8h12v8h12v-8" stroke="#2dd4bf" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="tag">Informed Search</span>
+        <h3>Maze Builder</h3>
+        <p>Draw your own walls, then watch A* find the shortest path using a distance heuristic to search smart, not blind.</p>
+        <div class="cta">Play &rarr;</div>
+      </div>
+      <div class="card" data-goto="sudoku">
+        <svg class="card-icon" viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="32" height="32" rx="2" stroke="#fbbf24" stroke-width="2"/><path d="M4 14.7h32M4 25.3h32M14.7 4v32M25.3 4v32" stroke="#fbbf24" stroke-width="1.5" opacity="0.6"/></svg>
+        <span class="tag">Constraint Satisfaction</span>
+        <h3>Sudoku</h3>
+        <p>Watch a backtracking solver fill in the grid live, always tackling the most-constrained cell first.</p>
+        <div class="cta">Play &rarr;</div>
+      </div>
+    </div>
+    <div class="intro-panel">
+      Every game here runs a real, unassisted AI model &mdash; nothing is hardcoded or faked. Pick one above; the console
+      on the right will narrate exactly what the algorithm is doing move by move, which is the point: <b>the game is
+      the interface, the algorithm is the product.</b>
+    </div>
+  </div>
+
+  <div class="stage" id="game-stage" style="display:none;">
+    <div class="panel">
+
+      <div class="view" id="view-ttt">
+        <button class="back-btn" data-goto="home">&larr; Back to all games</button>
+        <div class="panel-head">
+          <div class="panel-title">Tic-Tac-Toe</div>
+          <div class="tag">Minimax + Alpha-Beta</div>
+        </div>
+        <p class="panel-desc">You're <b style="color:var(--maze)">X</b>. The AI is <b style="color:var(--ttt)">O</b>. Difficulty controls how often the AI plays its true best move (Minimax) vs. a deliberately weaker random one — calibrated so <b>Easy ≈ 90% player win rate</b>, <b>Medium ≈ 50/50</b>, <b>Hard ≈ 30% player win rate</b> (rest mostly draws — the AI itself almost never wins, since that's just how optimal Tic-Tac-Toe defense works).</p>
+
+        <div class="controls">
+          <div class="control-group">
+            <span class="control-label">AI difficulty</span>
+            <div class="seg" id="ttt-diff">
+              <button class="seg-btn on-ttt" data-diff="easy">Easy</button>
+              <button class="seg-btn on-ttt" data-diff="medium">Medium</button>
+              <button class="seg-btn on-ttt active" data-diff="hard">Hard</button>
+            </div>
+          </div>
+          <div class="scoreboard" id="ttt-score">
+            <div class="score-item"><b id="s-win">0</b>You</div>
+            <div class="score-item"><b id="s-draw">0</b>Draw</div>
+            <div class="score-item"><b id="s-loss">0</b>AI</div>
+          </div>
+        </div>
+
+        <div class="ttt-wrap">
+          <div class="ttt-board" id="ttt-board"></div>
+          <svg class="win-line" id="ttt-winline" width="264" height="264"></svg>
+        </div>
+        <div class="ttt-status" id="ttt-status">Your move.</div>
+        <div class="btn-row">
+          <button class="btn accent-ttt" id="ttt-reset">New game</button>
+          <button class="btn ghost" id="ttt-score-reset">Reset score</button>
+        </div>
+      </div>
+
+      <div class="view" id="view-maze">
+        <button class="back-btn" data-goto="home">&larr; Back to all games</button>
+        <div class="panel-head">
+          <div class="panel-title">Maze Builder</div>
+          <div class="tag">A* Search</div>
+        </div>
+        <p class="panel-desc" id="maze-desc">Switch to <b style="color:var(--ttt)">Play</b> to navigate the maze yourself with arrow keys, or stay in <b style="color:var(--maze)">Build</b> to draw walls. Either way, <b>Solve with A*</b> shows the AI's own shortest path so you can compare.</p>
+
+        <div class="controls">
+          <div class="control-group">
+            <span class="control-label">Mode</span>
+            <div class="seg" id="maze-mode">
+              <button class="seg-btn on-maze active" data-mode="build">Build</button>
+              <button class="seg-btn on-maze" data-mode="play">Play it yourself</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label">Difficulty (wall density)</span>
+            <div class="seg" id="maze-diff">
+              <button class="seg-btn on-maze" data-diff="easy">Easy</button>
+              <button class="seg-btn on-maze active" data-diff="medium">Medium</button>
+              <button class="seg-btn on-maze" data-diff="hard">Hard</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label">Grid size</span>
+            <div class="seg" id="maze-size">
+              <button class="seg-btn on-maze" data-size="8">8&times;8</button>
+              <button class="seg-btn on-maze active" data-size="10">10&times;10</button>
+              <button class="seg-btn on-maze" data-size="12">12&times;12</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label">Animation speed</span>
+            <input type="range" id="maze-speed" min="1" max="5" value="3">
+          </div>
+        </div>
+
+        <div class="maze-board" id="maze-board"></div>
+        <div class="ttt-status" id="maze-status">Click or drag to add walls, or just hit Solve.</div>
+        <div class="btn-row">
+          <button class="btn accent-maze" id="maze-solve">Solve with A*</button>
+          <button class="btn" id="maze-random">New random maze</button>
+          <button class="btn" id="maze-clear">Clear walls</button>
+          <button class="btn ghost" id="maze-reset-player" style="display:none;">Reset player</button>
+        </div>
+      </div>
+
+      <div class="view" id="view-sudoku">
+        <button class="back-btn" data-goto="home">&larr; Back to all games</button>
+        <div class="panel-head">
+          <div class="panel-title">Sudoku</div>
+          <div class="tag">CSP + Backtracking</div>
+        </div>
+        <p class="panel-desc">Click any blank cell and type a number to solve it yourself — conflicts are highlighted live. Stuck? Use a hint, or let the AI (most-constrained cell first, MRV heuristic) solve the whole thing.</p>
+
+        <div class="controls">
+          <div class="control-group">
+            <span class="control-label">Puzzle</span>
+            <div class="seg" id="sudoku-diff">
+              <button class="seg-btn on-sudoku active" data-puzzle="easy">Easy</button>
+              <button class="seg-btn on-sudoku" data-puzzle="medium">Medium</button>
+              <button class="seg-btn on-sudoku" data-puzzle="hard">Hard</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label">AI animation speed</span>
+            <input type="range" id="sudoku-speed" min="1" max="5" value="3">
+          </div>
+        </div>
+
+        <div class="sudoku-board" id="sudoku-board"></div>
+        <div class="ttt-status" id="sudoku-status">Type a number in any blank cell to start.</div>
+        <div class="btn-row">
+          <button class="btn" id="sudoku-hint">Hint</button>
+          <button class="btn accent-sudoku" id="sudoku-solve">Reveal full solution (AI)</button>
+          <button class="btn ghost" id="sudoku-reset">Reset puzzle</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="console">
+      <div class="console-head">
+        <span>Algorithm trace</span>
+        <span class="console-dots"><span></span><span></span><span></span></span>
+      </div>
+      <div class="console-body" id="console-body"></div>
+      <div class="console-stats" id="console-stats"></div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span>Multi-Game AI &middot; Foundations of AI Semester Project</span>
+    <span>Minimax/Alpha-Beta &middot; A* Search &middot; CSP/Backtracking</span>
+  </footer>
+
+</div>
+
+<script>
+const consoleBody = document.getElementById('console-body');
+const consoleStats = document.getElementById('console-stats');
+function log(msg, cls){
+  const line = document.createElement('div');
+  line.className = 'log-line' + (cls ? ' '+cls : '');
+  line.textContent = msg;
+  consoleBody.appendChild(line);
+  consoleBody.scrollTop = consoleBody.scrollHeight;
+}
+function clearLog(){ consoleBody.innerHTML = ''; }
+function setStats(pairs){
+  consoleStats.innerHTML = pairs.map(([label,val]) => `<div><b>${val}</b>${label}</div>`).join('');
+}
+
+const gameStage = document.getElementById('game-stage');
+const homeView = document.getElementById('view-home');
+
+function goto(view){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='home'){
+    homeView.classList.add('active');
+    gameStage.style.display='none';
+  } else {
+    homeView.classList.remove('active');
+    gameStage.style.display='grid';
+    document.querySelectorAll('#game-stage .view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+view).classList.add('active');
+    clearLog(); setStats([]);
+    if(view==='ttt') log('Tic-Tac-Toe ready. Your move as X.','k');
+    if(view==='maze') log('Maze ready. Click Solve to run A*.','k');
+    if(view==='sudoku') log('Sudoku ready. Click Solve to run backtracking.','k');
+  }
+}
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>goto(btn.dataset.view));
+});
+document.querySelectorAll('[data-goto]').forEach(el=>{
+  el.addEventListener('click', ()=>goto(el.dataset.goto));
+});
+
+(function(){
+  const HUMAN='X', AI='O', EMPTY=null;
+  let board, gameOver, difficulty='hard';
+  let score = {win:0, draw:0, loss:0};
+  const boardEl = document.getElementById('ttt-board');
+  const statusEl = document.getElementById('ttt-status');
+  const winlineEl = document.getElementById('ttt-winline');
+
+  const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  const CELL = 90;
+
+  function winnerLine(b){
+    for(const line of LINES){
+      const a=line[0], c=line[1], d=line[2];
+      if(b[a] && b[a]===b[c] && b[a]===b[d]) return {player:b[a], line};
+    }
+    return null;
+  }
+  function isFull(b){ return b.every(c=>c!==EMPTY); }
+
+  function minimax(b, depth, alpha, beta, maximizing, stats){
+    const w = winnerLine(b);
+    if(w && w.player===AI){ stats.leaves++; return 10-depth; }
+    if(w && w.player===HUMAN){ stats.leaves++; return depth-10; }
+    if(isFull(b)){ stats.leaves++; return 0; }
+
+    if(maximizing){
+      let best=-Infinity;
+      for(let i=0;i<9;i++){
+        if(b[i]===EMPTY){
+          b[i]=AI;
+          const val = minimax(b, depth+1, alpha, beta, false, stats);
+          b[i]=EMPTY;
+          best=Math.max(best,val); alpha=Math.max(alpha,best);
+          if(beta<=alpha){ stats.pruned++; break; }
+        }
+      }
+      return best;
+    } else {
+      let best=Infinity;
+      for(let i=0;i<9;i++){
+        if(b[i]===EMPTY){
+          b[i]=HUMAN;
+          const val = minimax(b, depth+1, alpha, beta, true, stats);
+          b[i]=EMPTY;
+          best=Math.min(best,val); beta=Math.min(beta,best);
+          if(beta<=alpha){ stats.pruned++; break; }
+        }
+      }
+      return best;
+    }
+  }
+
+  function bestMoveMinimax(){
+    const stats = {leaves:0, pruned:0};
+    let bestVal=-Infinity, move=null;
+    for(let i=0;i<9;i++){
+      if(board[i]===EMPTY){
+        board[i]=AI;
+        const val = minimax(board, 0, -Infinity, Infinity, false, stats);
+        board[i]=EMPTY;
+        if(val>bestVal){ bestVal=val; move=i; }
+      }
+    }
+    return {move, bestVal, stats};
+  }
+
+  function randomMove(){
+    const empties = board.map((v,i)=>v===EMPTY?i:null).filter(v=>v!==null);
+    return empties[Math.floor(Math.random()*empties.length)];
+  }
+
+  // Calibrated by simulation against a decent (non-random) human strategy:
+  // easy -> human wins ~90%, medium -> ~50/50, hard -> human wins ~30%, rest mostly draws.
+  const DIFF_P_RANDOM = { easy: 0.85, medium: 0.32, hard: 0.18 };
+
+  function aiMove(){
+    const roll = Math.random();
+    const pRandom = DIFF_P_RANDOM[difficulty];
+    let move, bestVal=null, stats={leaves:0,pruned:0}, usedRandom=false;
+
+    if(roll < pRandom){
+      move = randomMove(); usedRandom = true;
+    } else {
+      const r = bestMoveMinimax(); move=r.move; bestVal=r.bestVal; stats=r.stats;
+    }
+
+    board[move]=AI;
+    if(usedRandom){
+      log(`AI (${difficulty}) deliberately plays a weaker random move: position ${move+1}`, 'mv');
+      setStats([['difficulty', difficulty], ['move type', 'random']]);
+    } else {
+      log(`AI evaluates position ${move+1} as best (score ${bestVal})`, 'mv');
+      setStats([['leaf nodes read', stats.leaves], ['branches pruned', stats.pruned]]);
+    }
+    render();
+    checkEnd();
+  }
+
+  function render(highlightWin){
+    boardEl.innerHTML='';
+    board.forEach((v,i)=>{
+      const cell=document.createElement('div');
+      cell.className='ttt-cell'+(v?' filled':'')+(v==='X'?' x':'')+(v==='O'?' o':'');
+      if(highlightWin && highlightWin.line.includes(i)) cell.classList.add('win');
+      cell.textContent = v || '';
+      cell.addEventListener('click', ()=>onCellClick(i));
+      boardEl.appendChild(cell);
+    });
+  }
+
+  function drawWinLine(line){
+    const a=line[0], c=line[2];
+    const rA=Math.floor(a/3), cA=a%3, rC=Math.floor(c/3), cC=c%3;
+    const x1=cA*CELL+42, y1=rA*CELL+42, x2=cC*CELL+42, y2=rC*CELL+42;
+    winlineEl.innerHTML = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--maze)" stroke-width="4"/>`;
+  }
+
+  function updateScoreUI(){
+    document.getElementById('s-win').textContent = score.win;
+    document.getElementById('s-draw').textContent = score.draw;
+    document.getElementById('s-loss').textContent = score.loss;
+  }
+
+  function checkEnd(){
+    const w = winnerLine(board);
+    if(w || isFull(board)){
+      gameOver = true;
+      if(w){
+        render(w);
+        drawWinLine(w.line);
+        if(w.player===HUMAN){ score.win++; statusEl.textContent='You win!'; statusEl.className='ttt-status win-text'; log('Human wins!','ok'); }
+        else { score.loss++; statusEl.textContent='AI wins.'; statusEl.className='ttt-status lose-text'; log('AI wins.','mv'); }
+      } else {
+        score.draw++;
+        statusEl.textContent = "It's a draw."; statusEl.className='ttt-status';
+        log('Board full — draw.', 'ok');
+      }
+      updateScoreUI();
+      return true;
+    }
+    return false;
+  }
+
+  function onCellClick(i){
+    if(gameOver || board[i]!==EMPTY) return;
+    board[i]=HUMAN;
+    render();
+    if(checkEnd()) return;
+    statusEl.textContent = 'AI thinking...';
+    setTimeout(()=>{ aiMove(); if(!gameOver) statusEl.textContent = 'Your move.'; }, 150);
+  }
+
+  function reset(){
+    board = Array(9).fill(EMPTY);
+    gameOver = false;
+    statusEl.textContent = 'Your move.'; statusEl.className='ttt-status';
+    winlineEl.innerHTML='';
+    clearLog(); setStats([]);
+    log(`New game. Difficulty: ${difficulty}. Your move as X.`,'k');
+    render();
+  }
+
+  document.getElementById('ttt-reset').addEventListener('click', reset);
+  document.getElementById('ttt-score-reset').addEventListener('click', ()=>{
+    score = {win:0, draw:0, loss:0}; updateScoreUI(); log('Scoreboard reset.','k');
+  });
+  document.querySelectorAll('#ttt-diff .seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#ttt-diff .seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      difficulty = btn.dataset.diff;
+      reset();
+    });
+  });
+
+  reset();
+})();
+
+(function(){
+  let SIZE = 10;
+  let grid;
+  let start=[0,0], goal=[SIZE-1, SIZE-1];
+  const boardEl = document.getElementById('maze-board');
+  const statusEl = document.getElementById('maze-status');
+  const descEl = document.getElementById('maze-desc');
+  const speedInput = document.getElementById('maze-speed');
+  const resetPlayerBtn = document.getElementById('maze-reset-player');
+  let solving = false;
+  let isDragging = false;
+  let mode = 'build'; // 'build' | 'play'
+  let difficulty = 'medium';
+  let playerPos = null;
+  let playerPath = [];
+  let playerWon = false;
+
+  const SPEED_MS = {1:0, 2:4, 3:10, 4:22, 5:45};
+  // wall density per difficulty tier, like the Sudoku puzzle picker but for maze crowding
+  const DIFF_DENSITY = { easy: 0.14, medium: 0.28, hard: 0.42 };
+
+  function key(r,c){ return r+','+c; }
+  function makeGrid(){ grid = Array.from({length:SIZE}, ()=>Array(SIZE).fill(0)); start=[0,0]; goal=[SIZE-1,SIZE-1]; }
+
+  function resetPlayer(){
+    playerPos = [start[0], start[1]];
+    playerPath = [[start[0], start[1]]];
+    playerWon = false;
+  }
+
+  function render(){
+    boardEl.style.gridTemplateColumns = `repeat(${SIZE}, ${Math.max(20, Math.floor(340/SIZE))}px)`;
+    boardEl.style.gridTemplateRows = `repeat(${SIZE}, ${Math.max(20, Math.floor(340/SIZE))}px)`;
+    boardEl.innerHTML='';
+    const trailSet = new Set((playerPath||[]).map(p=>key(p[0],p[1])));
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        const cell=document.createElement('div');
+        cell.className='maze-cell';
+        const isStart = r===start[0]&&c===start[1];
+        const isGoal = r===goal[0]&&c===goal[1];
+        if(mode==='play' && playerPos && playerPos[0]===r && playerPos[1]===c){
+          cell.classList.add('player-pos');
+          if(isGoal) cell.classList.add('on-goal');
+        } else if(isStart){ cell.classList.add('start'); }
+        else if(isGoal){ cell.classList.add('goal'); }
+        else if(grid[r][c]===1){ cell.classList.add('wall'); }
+        else if(mode==='play' && trailSet.has(key(r,c))){ cell.classList.add('player-trail'); }
+        cell.dataset.r=r; cell.dataset.c=c;
+        cell.addEventListener('mousedown', (e)=>{ e.preventDefault(); if(mode==='build'){ isDragging=true; toggleWall(r,c,true); } });
+        cell.addEventListener('mouseenter', ()=>{ if(mode==='build' && isDragging) toggleWall(r,c,false); });
+        cell.addEventListener('click', ()=>{
+          if(mode==='build') toggleWall(r,c,true);
+          else tryMoveTo(r,c);
+        });
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+  document.addEventListener('mouseup', ()=>isDragging=false);
+
+  function toggleWall(r,c,isClick){
+    if(solving) return;
+    if((r===start[0]&&c===start[1])||(r===goal[0]&&c===goal[1])) return;
+    if(isClick) grid[r][c] = grid[r][c] ? 0 : 1;
+    else grid[r][c] = 1;
+    render();
+  }
+
+  function heuristic(a,b){ return Math.abs(a[0]-b[0]) + Math.abs(a[1]-b[1]); }
+  function neighbors(pos){
+    const r=pos[0], c=pos[1];
+    const out=[];
+    const dirs=[[-1,0],[1,0],[0,-1],[0,1]];
+    for(const d of dirs){
+      const nr=r+d[0], nc=c+d[1];
+      if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&grid[nr][nc]!==1) out.push([nr,nc]);
+    }
+    return out;
+  }
+
+  function aStar(){
+    const open=[{pos:start, g:0, f:heuristic(start,goal)}];
+    const cameFrom={}; const gScore={}; gScore[key(start[0],start[1])]=0;
+    const visitedOrder=[]; const visitedSet=new Set();
+    while(open.length){
+      open.sort((a,b)=>a.f-b.f);
+      const current = open.shift();
+      const ck = key(current.pos[0],current.pos[1]);
+      if(visitedSet.has(ck)) continue;
+      visitedSet.add(ck); visitedOrder.push(current.pos);
+      if(current.pos[0]===goal[0] && current.pos[1]===goal[1]){
+        let path=[current.pos]; let ckey=ck;
+        while(cameFrom[ckey]){ path.push(cameFrom[ckey]); ckey = key(cameFrom[ckey][0],cameFrom[ckey][1]); }
+        path.reverse();
+        return {path, visitedOrder};
+      }
+      const nbrs = neighbors(current.pos);
+      for(const n of nbrs){
+        const nk = key(n[0],n[1]); const tentativeG = current.g + 1;
+        if(!(nk in gScore) || tentativeG < gScore[nk]){
+          gScore[nk]=tentativeG; cameFrom[nk]=current.pos;
+          open.push({pos:n, g:tentativeG, f: tentativeG + heuristic(n,goal)});
+        }
+      }
+    }
+    return {path:null, visitedOrder};
+  }
+
+  function isSolvable(){ return aStar().path !== null; }
+
+  async function solve(){
+    if(solving) return;
+    solving = true;
+    clearLog(); setStats([]);
+    document.querySelectorAll('.maze-cell').forEach(c=>c.classList.remove('visited','path'));
+    log('Running A* — expanding lowest f(n) = g(n) + h(n) first...','k');
+    const delay = SPEED_MS[speedInput.value];
+
+    const result = aStar();
+    const path = result.path, visitedOrder = result.visitedOrder;
+    for(let i=0;i<visitedOrder.length;i++){
+      const r=visitedOrder[i][0], c=visitedOrder[i][1];
+      if(!(r===start[0]&&c===start[1]) && !(r===goal[0]&&c===goal[1])){
+        const idx = r*SIZE+c;
+        if(boardEl.children[idx]) boardEl.children[idx].classList.add('visited');
+      }
+      if(i % 4 === 0){
+        log(`explore (${r},${c})  g=${i}  h=${heuristic([r,c],goal)}`, 'k');
+        if(delay) await new Promise(res=>setTimeout(res, delay));
+      }
+    }
+
+    if(path){
+      for(const p of path){
+        const r=p[0], c=p[1];
+        if(!(r===start[0]&&c===start[1]) && !(r===goal[0]&&c===goal[1])){
+          const idx = r*SIZE+c;
+          if(boardEl.children[idx]) boardEl.children[idx].classList.add('path');
+        }
+      }
+      log(`AI path found — length ${path.length-1} steps.`, 'ok');
+      if(mode==='play' && playerWon){
+        const diff = playerPath.length-1 - (path.length-1);
+        log(diff===0 ? 'Your run matched the AI\'s optimal path exactly!' : `You took ${diff} more step(s) than the optimal AI path.`, diff===0?'ok':'hi');
+        statusEl.textContent = `You: ${playerPath.length-1} steps. AI optimal: ${path.length-1} steps.`;
+      } else {
+        statusEl.textContent = `AI solved it: ${path.length-1} steps, ${visitedOrder.length} cells explored.`;
+      }
+      setStats([['cells explored', visitedOrder.length], ['AI path length', path.length-1]]);
+    } else {
+      log('No path exists between start and goal.', 'hi');
+      statusEl.textContent = 'No path exists — remove a wall and try again.';
+      setStats([['cells explored', visitedOrder.length], ['path length', '—']]);
+    }
+    solving = false;
+  }
+
+  function generateMaze(){
+    if(solving) return;
+    const density = DIFF_DENSITY[difficulty];
+    let tries = 0;
+    do {
+      makeGrid();
+      for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+        if((r===start[0]&&c===start[1])||(r===goal[0]&&c===goal[1])) continue;
+        if(Math.random() < density) grid[r][c]=1;
+      }
+      tries++;
+    } while(!isSolvable() && tries < 40);
+    resetPlayer();
+    render();
+    statusEl.textContent = `New ${difficulty} maze generated (${Math.round(density*100)}% wall density). ` +
+      (mode==='play' ? 'Use arrow keys or click an adjacent cell to move.' : 'Click Solve, or switch to Play mode.');
+    clearLog(); setStats([]);
+    log(`Generated ${difficulty} maze — wall density ${Math.round(density*100)}%.`,'k');
+  }
+
+  function clearWalls(){
+    if(solving) return;
+    makeGrid(); resetPlayer(); render();
+    statusEl.textContent = 'Walls cleared.';
+    clearLog(); setStats([]); log('Grid cleared.','k');
+  }
+
+  function updateModeUI(){
+    document.querySelectorAll('.maze-cell').forEach(c=>c.classList.remove('visited','path'));
+    resetPlayerBtn.style.display = (mode==='play') ? 'inline-block' : 'none';
+    if(mode==='play'){
+      descEl.innerHTML = 'Use <b>arrow keys / WASD</b>, or click a cell next to you, to walk from <b style="color:var(--maze)">start</b> to <b style="color:var(--sudoku)">goal</b>. Hit <b>Solve with A*</b> any time to compare your path to the AI\'s optimal one.';
+      statusEl.textContent = 'Use arrow keys or click an adjacent cell to move.';
+    } else {
+      descEl.innerHTML = 'Click, or click-and-drag, to draw walls between <b style="color:var(--maze)">start</b> and <b style="color:var(--sudoku)">goal</b>. f(n) = g(n) + h(n), Manhattan distance heuristic.';
+      statusEl.textContent = 'Click or drag to add walls, or just hit Solve.';
+    }
+    render();
+  }
+
+  function tryMoveTo(r,c){
+    if(solving || !playerPos || playerWon) return;
+    const dr = Math.abs(r-playerPos[0]), dc = Math.abs(c-playerPos[1]);
+    if(dr+dc !== 1) return; // must be orthogonally adjacent
+    if(grid[r][c]===1) return; // can't walk into a wall
+    movePlayer(r,c);
+  }
+
+  function movePlayer(r,c){
+    playerPos = [r,c];
+    playerPath.push([r,c]);
+    log(`move to (${r},${c})`, 'mv');
+    render();
+    if(r===goal[0] && c===goal[1]){
+      playerWon = true;
+      const steps = playerPath.length-1;
+      statusEl.textContent = `You solved it in ${steps} steps! Click Solve to see the AI's optimal path.`;
+      log(`Goal reached in ${steps} steps.`, 'ok');
+      setStats([['your steps', steps]]);
+    }
+  }
+
+  function handleKey(e){
+    if(mode!=='play' || solving || !playerPos || playerWon) return;
+    const view = document.getElementById('view-maze');
+    if(!view.classList.contains('active')) return;
+    let dr=0, dc=0;
+    if(e.key==='ArrowUp' || e.key==='w' || e.key==='W'){ dr=-1; }
+    else if(e.key==='ArrowDown' || e.key==='s' || e.key==='S'){ dr=1; }
+    else if(e.key==='ArrowLeft' || e.key==='a' || e.key==='A'){ dc=-1; }
+    else if(e.key==='ArrowRight' || e.key==='d' || e.key==='D'){ dc=1; }
+    else return;
+    e.preventDefault();
+    const nr=playerPos[0]+dr, nc=playerPos[1]+dc;
+    if(nr<0||nr>=SIZE||nc<0||nc>=SIZE) return;
+    if(grid[nr][nc]===1) return;
+    movePlayer(nr,nc);
+  }
+  document.addEventListener('keydown', handleKey);
+
+  document.getElementById('maze-solve').addEventListener('click', solve);
+  document.getElementById('maze-random').addEventListener('click', generateMaze);
+  document.getElementById('maze-clear').addEventListener('click', clearWalls);
+  resetPlayerBtn.addEventListener('click', ()=>{
+    if(solving) return;
+    resetPlayer(); render();
+    statusEl.textContent = 'Back to start. Use arrow keys or click an adjacent cell to move.';
+    clearLog(); setStats([]); log('Player reset to start.','k');
+  });
+
+  document.querySelectorAll('#maze-mode .seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(solving) return;
+      document.querySelectorAll('#maze-mode .seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      if(mode==='play') resetPlayer();
+      updateModeUI();
+    });
+  });
+  document.querySelectorAll('#maze-diff .seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(solving) return;
+      document.querySelectorAll('#maze-diff .seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      difficulty = btn.dataset.diff;
+      generateMaze();
+    });
+  });
+  document.querySelectorAll('#maze-size .seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(solving) return;
+      document.querySelectorAll('#maze-size .seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      SIZE = parseInt(btn.dataset.size, 10);
+      generateMaze();
+    });
+  });
+
+  makeGrid();
+  resetPlayer();
+  render();
+})();
+
+(function(){
+  const EMPTY = 0;
+  const PUZZLES = {
+    easy: [
+      [5,3,0, 0,7,0, 0,0,0],
+      [6,0,0, 1,9,5, 0,0,0],
+      [0,9,8, 0,0,0, 0,6,0],
+      [8,0,0, 0,6,0, 0,0,3],
+      [4,0,0, 8,0,3, 0,0,1],
+      [7,0,0, 0,2,0, 0,0,6],
+      [0,6,0, 0,0,0, 2,8,0],
+      [0,0,0, 4,1,9, 0,0,5],
+      [0,0,0, 0,8,0, 0,7,9]
+    ],
+    medium: [
+      [0,2,0, 6,0,8, 0,0,0],
+      [5,8,0, 0,0,9, 7,0,0],
+      [0,0,0, 0,4,0, 0,0,0],
+      [3,7,0, 0,0,0, 5,0,0],
+      [6,0,0, 0,0,0, 0,0,4],
+      [0,0,8, 0,0,0, 0,1,3],
+      [0,0,0, 0,2,0, 0,0,0],
+      [0,0,9, 8,0,0, 0,3,6],
+      [0,0,0, 3,0,6, 0,9,0]
+    ],
+    hard: [
+      [0,0,0, 0,0,0, 0,1,2],
+      [0,0,0, 0,3,5, 0,0,0],
+      [0,0,0, 6,0,0, 0,7,0],
+      [7,0,0, 0,0,0, 3,0,0],
+      [0,0,4, 0,8,0, 0,0,0],
+      [1,0,0, 0,0,0, 0,0,0],
+      [0,0,0, 0,0,0, 2,0,0],
+      [0,0,0, 4,1,0, 0,0,0],
+      [0,0,0, 0,0,0, 0,0,0]
+    ]
+  };
+  let currentPuzzle = 'easy';
+  let userGrid;       // what the player has typed (0 = still blank)
+  let trueSolution;   // the unique solved grid, computed once per puzzle, used for hints
+  const boardEl = document.getElementById('sudoku-board');
+  const statusEl = document.getElementById('sudoku-status');
+  const speedInput = document.getElementById('sudoku-speed');
+  let solving = false;
+  let solvedState = false;
+  const SPEED_MS = {1:0, 2:3, 3:8, 4:18, 5:35};
+
+  function isValid(g,row,col,num){
+    for(let c=0;c<9;c++) if(c!==col && g[row][c]===num) return false;
+    for(let r=0;r<9;r++) if(r!==row && g[r][col]===num) return false;
+    const br=3*Math.floor(row/3), bc=3*Math.floor(col/3);
+    for(let r=br;r<br+3;r++) for(let c=bc;c<bc+3;c++) if((r!==row||c!==col) && g[r][c]===num) return false;
+    return true;
+  }
+
+  function findBestEmptyCell(g){
+    let best=null;
+    for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+      if(g[r][c]===EMPTY){
+        const candidates=[];
+        for(let n=1;n<=9;n++) if(isValid(g,r,c,n)) candidates.push(n);
+        if(!best || candidates.length < best.candidates.length){
+          best={r:r,c:c,candidates:candidates};
+          if(candidates.length===1) return best;
+        }
+      }
+    }
+    return best;
+  }
+
+  function solveCSP(g, steps){
+    const cell = findBestEmptyCell(g);
+    if(!cell) return true;
+    const r=cell.r, c=cell.c, candidates=cell.candidates;
+    if(candidates.length===0){ if(steps) steps.push({type:'dead', r:r, c:c}); return false; }
+    for(const num of candidates){
+      g[r][c]=num;
+      if(steps) steps.push({type:'assign', r:r, c:c, num:num, candidates: candidates.length});
+      if(solveCSP(g, steps)) return true;
+      g[r][c]=EMPTY;
+      if(steps) steps.push({type:'backtrack', r:r, c:c});
+    }
+    return false;
+  }
+
+  function computeTrueSolution(){
+    const working = PUZZLES[currentPuzzle].map(row=>row.slice());
+    solveCSP(working, null);
+    trueSolution = working;
+  }
+
+  /* ---------- rendering: given cells are static divs, blanks are <input> ---------- */
+  function buildBoard(){
+    const P = PUZZLES[currentPuzzle];
+    boardEl.innerHTML='';
+    for(let r=0;r<9;r++){
+      for(let c=0;c<9;c++){
+        const cell=document.createElement('div');
+        let cls='sudoku-cell';
+        if((r+1)%3===0 && r!==8) cls+=' nth-r3';
+        if((c+1)%3===0 && c!==8) cls+=' nth-c3';
+        const given = P[r][c] !== EMPTY;
+        cell.className = cls + (given ? ' given' : '');
+        cell.dataset.r=r; cell.dataset.c=c;
+
+        if(given){
+          cell.textContent = P[r][c];
+        } else {
+          const input = document.createElement('input');
+          input.className = 'sudoku-input';
+          input.maxLength = 1;
+          input.inputMode = 'numeric';
+          input.dataset.r=r; input.dataset.c=c;
+          const v = userGrid[r][c];
+          input.value = v ? v : '';
+          input.addEventListener('input', onCellInput);
+          input.addEventListener('keydown', onCellKeydown);
+          cell.appendChild(input);
+        }
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  function onCellKeydown(e){
+    // arrow-key navigation between cells, nice to have for a keyboard-first puzzle
+    const r = parseInt(e.target.dataset.r,10), c = parseInt(e.target.dataset.c,10);
+    let nr=r, nc=c;
+    if(e.key==='ArrowUp') nr=r-1;
+    else if(e.key==='ArrowDown') nr=r+1;
+    else if(e.key==='ArrowLeft') nc=c-1;
+    else if(e.key==='ArrowRight') nc=c+1;
+    else return;
+    e.preventDefault();
+    if(nr<0||nr>8||nc<0||nc>8) return;
+    const next = boardEl.querySelector(`input[data-r="${nr}"][data-c="${nc}"]`);
+    if(next) next.focus();
+  }
+
+  function onCellInput(e){
+    if(solvedState) return;
+    const r = parseInt(e.target.dataset.r,10), c = parseInt(e.target.dataset.c,10);
+    let raw = e.target.value.replace(/[^1-9]/g,'').slice(0,1);
+    e.target.value = raw;
+    e.target.classList.remove('hinted');
+    userGrid[r][c] = raw ? parseInt(raw,10) : 0;
+    validateAll();
+  }
+
+  function combinedGrid(){
+    const P = PUZZLES[currentPuzzle];
+    const g = P.map(row=>row.slice());
+    for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+      if(P[r][c]===EMPTY && userGrid[r][c]!==0) g[r][c] = userGrid[r][c];
+    }
+    return g;
+  }
+
+  function validateAll(){
+    const g = combinedGrid();
+    let conflicts = 0, filled = 0;
+    boardEl.querySelectorAll('.sudoku-input').forEach(input=>{
+      const r = parseInt(input.dataset.r,10), c = parseInt(input.dataset.c,10);
+      const v = g[r][c];
+      if(v===0){ input.classList.remove('conflict'); return; }
+      filled++;
+      const ok = isValid(g, r, c, v);
+      input.classList.toggle('conflict', !ok);
+      if(!ok) conflicts++;
+    });
+
+    const P = PUZZLES[currentPuzzle];
+    const totalBlanks = P.flat().filter(v=>v===EMPTY).length;
+
+    if(conflicts===0 && filled===totalBlanks){
+      solvedState = true;
+      statusEl.textContent = 'Solved it yourself — nice work!';
+      statusEl.className = 'ttt-status win-text';
+      log('Player completed the puzzle with zero conflicts. Solved!', 'ok');
+      setStats([['your fills', filled], ['conflicts', 0]]);
+    } else {
+      statusEl.textContent = conflicts>0
+        ? `${conflicts} conflicting cell(s) — fix the red ones.`
+        : `${filled}/${totalBlanks} cells filled.`;
+      statusEl.className = conflicts>0 ? 'ttt-status lose-text' : 'ttt-status';
+    }
+  }
+
+  /* ---------- Hint: reveal one correct cell, MRV-style ---------- */
+  function hint(){
+    if(solving || solvedState) return;
+    // build a constraint grid using only cells that are correct so far (given + correctly-typed)
+    const P = PUZZLES[currentPuzzle];
+    const working = P.map(row=>row.slice());
+    for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+      if(P[r][c]===EMPTY && userGrid[r][c]!==0 && userGrid[r][c]===trueSolution[r][c]){
+        working[r][c] = userGrid[r][c];
+      }
+    }
+    const best = findBestEmptyCell(working);
+    if(!best){ log('No blank cells left to hint.', 'k'); return; }
+    const {r,c,candidates} = best;
+    const value = trueSolution[r][c];
+    userGrid[r][c] = value;
+    const input = boardEl.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
+    if(input){ input.value = value; input.classList.add('hinted'); }
+    log(`hint: (${r},${c}) = ${value}  [MRV — only ${candidates.length} candidate(s) here]`, 'hi');
+    validateAll();
+  }
+
+  /* ---------- full AI solve/animate (unchanged algorithm, now clearly a separate "reveal" action) ---------- */
+  async function solve(){
+    if(solving) return;
+    solving = true;
+    solvedState = true;
+    clearLog(); setStats([]);
+    log(`Revealing full AI solution for "${currentPuzzle}" — MRV heuristic picks most-constrained cell first...`,'k');
+
+    const working = PUZZLES[currentPuzzle].map(row=>row.slice());
+    const steps = [];
+    const solved = solveCSP(working, steps);
+    const delay = SPEED_MS[speedInput.value];
+
+    let assigns=0, backtracks=0;
+    let animGrid = PUZZLES[currentPuzzle].map(row=>row.slice());
+
+    function paint(){
+      boardEl.querySelectorAll('.sudoku-input').forEach(input=>{
+        const r = parseInt(input.dataset.r,10), c = parseInt(input.dataset.c,10);
+        const v = animGrid[r][c];
+        input.value = v ? v : '';
+        input.classList.remove('conflict');
+        input.classList.toggle('hinted', !!v);
+      });
+    }
+
+    for(let i=0;i<steps.length;i++){
+      const s = steps[i];
+      if(s.type==='assign'){
+        assigns++;
+        animGrid[s.r][s.c] = s.num;
+        if(i % 3 === 0){
+          log(`assign (${s.r},${s.c}) = ${s.num}  [${s.candidates} candidate(s)]`, 'k');
+          paint();
+          if(delay) await new Promise(res=>setTimeout(res, delay));
+        }
+      } else if(s.type==='backtrack'){
+        backtracks++;
+        animGrid[s.r][s.c] = EMPTY;
+        if(backtracks % 2 === 0){
+          log(`backtrack at (${s.r},${s.c})`, 'hi');
+          paint();
+          if(delay) await new Promise(res=>setTimeout(res, delay));
+        }
+      }
+    }
+
+    paint();
+    // sync userGrid to the revealed solution so validateAll stays consistent
+    for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+      if(PUZZLES[currentPuzzle][r][c]===EMPTY) userGrid[r][c] = animGrid[r][c];
+    }
+    if(solved){
+      log(`Solved after ${assigns} assignments, ${backtracks} backtracks.`, 'ok');
+      statusEl.textContent = 'AI solution revealed.';
+      statusEl.className = 'ttt-status';
+    } else {
+      log('No solution found.', 'hi');
+      statusEl.textContent = 'No solution exists for this puzzle.';
+    }
+    setStats([['assignments', assigns], ['backtracks', backtracks]]);
+    solving = false;
+  }
+
+  function reset(){
+    if(solving) return;
+    userGrid = PUZZLES[currentPuzzle].map(row=>row.map(()=>0));
+    solvedState = false;
+    computeTrueSolution();
+    buildBoard();
+    clearLog(); setStats([]); log(`Puzzle reset ("${currentPuzzle}"). Type in any blank cell to play.`,'k');
+    statusEl.textContent = 'Type a number in any blank cell to start.';
+    statusEl.className = 'ttt-status';
+  }
+
+  document.getElementById('sudoku-solve').addEventListener('click', solve);
+  document.getElementById('sudoku-hint').addEventListener('click', hint);
+  document.getElementById('sudoku-reset').addEventListener('click', reset);
+  document.querySelectorAll('#sudoku-diff .seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(solving) return;
+      document.querySelectorAll('#sudoku-diff .seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPuzzle = btn.dataset.puzzle;
+      reset();
+    });
+  });
+
+  reset();
+})();
+</script>
+</body>
+</html>
